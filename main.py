@@ -52,7 +52,7 @@ def Get_iCloud_Authentication_Session():
         else:
             print("[Invalid Number] Try Again!")
     
-
+# main
 if __name__ == "__main__":
     
     # Intro
@@ -60,14 +60,6 @@ if __name__ == "__main__":
     
     # Get User Account Session
     Account_Session = Get_iCloud_Authentication_Session()
-
-    print(Account_Session)
-
-
-    # iCloud Login
-    # iCloud_Login.Authentication_NewToken()
-
-
 
     # iCloud Drive
 
