@@ -4,12 +4,12 @@ import requests
 import json
 import urllib3
 import msvcrt
-from getpass import getpass
 from iCloud_Session import Session
 from termcolor import colored
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+# Fiddler Local proxy
 proxies = {
     'http': 'http://127.0.0.1:8888',
     'https': 'http://127.0.0.1:8888'
@@ -45,7 +45,7 @@ def Authentication_NewToken() -> dict:
             print(colored("\n[Invalid Input] Try Again!\n", 'yellow'))
 
     # Login Based Session Authentication Start!
-    iCloud_Login_Class = iCloud_Auth_Session(iCloud_ID, iCloud_PW)
+    iCloud_Login_Class = iCloud_Account_Session(iCloud_ID, iCloud_PW)
 
     # Check whether to save the Session Data or not
     while True:
@@ -94,7 +94,7 @@ def Authentication_FileToken() -> dict:
     return iCloud_Session_Class.readSession(Local_Session_Path)
 
 
-# Remove input "\'" or "\""  (ex: 'path' -> path)
+
 def input_iCloud_Credential():
     iCloud_ID = input(colored("iCloud ID: ", 'yellow'))
     iCloud_PW = ""
@@ -118,7 +118,7 @@ def input_iCloud_Credential():
                 msvcrt.putch(b'\b')
                 msvcrt.putch(b' ')
                 msvcrt.putch(b'\b')
-                pwChar = pwChar[:-1]
+                iCloud_PW = iCloud_PW[:-1]
                 len_Of_PW -= 1
 
         # [Arrow] Key Exception
@@ -141,7 +141,7 @@ def input_iCloud_Credential():
 
     return iCloud_ID, iCloud_PW
 
-
+# Remove input "\'" or "\""  (ex: 'path' -> path)
 def dequote(s):
     if (s[0] == s[-1]) and s.startswith(("'", '"')):
         return s[1:-1]
@@ -149,7 +149,7 @@ def dequote(s):
 
 
 # iCloud Auth Class <- Inheritance iCloud_Session Class
-class iCloud_Auth_Session(Session):
+class iCloud_Account_Session(Session):
 
     # Require iCloud ID, PW and TrustToken (Default Empty String)
     def __init__(self, ID, Password, TrustToken=''):

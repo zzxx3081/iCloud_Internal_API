@@ -1,6 +1,6 @@
 import os
 import sys
-import iCloud_Login
+import iCloud_Login, iCloud_Mail
 from pyfiglet import Figlet
 from termcolor import colored
 
@@ -71,3 +71,4 @@ if __name__ == "__main__":
     # iCloud Drive
 
     # iCloud Mail
+    iCloud_Mail.Forensic(Account_Session)

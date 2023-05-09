@@ -9,6 +9,7 @@ class Session:
     # return Session value
     def getSesssion(self):
         return self.SessionJson
+    
 
     # Save Session Data
     def saveSession(self, filePath):
@@ -22,10 +23,11 @@ class Session:
 
     # Read Session Data
     def readSession(self, filePath):
-        with open(filePath, 'r', encoding='UTF-8') as InSessionFile:
-            self.SessionJson = json.load(InSessionFile)
+        try:
+            with open(filePath, 'r', encoding='UTF-8') as InSessionFile:
+                self.SessionJson = json.load(InSessionFile)
 
-        print(f"[Success] Read the Session File : {filePath}" + "\n")
-        return self.SessionJson
-        
-        
+            print(f"[Success] Read the Session File : {filePath}" + "\n")
+            return self.SessionJson
+        except Exception as e:
+            print("[Fail] Invalid Session path", e)
