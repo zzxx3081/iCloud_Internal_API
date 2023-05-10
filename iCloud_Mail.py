@@ -9,8 +9,8 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Fiddler Local proxy
 proxies = {
-    'http': 'http://127.0.0.1:8888',
-    'https': 'http://127.0.0.1:8888'
+    # 'http': 'http://127.0.0.1:8888',
+    # 'https': 'http://127.0.0.1:8888'
 }
 
 # Start iCloud Mail Forensics
@@ -66,15 +66,16 @@ class iCloud_Account_Mail:
     # Create "iCloud Mail" Directory to current path
     def __init__(self, Account_Session : dict):
         self.cookies = Account_Session["AccountSessions"] # dict
-        self.initDirPath = ".\iCloud Mail"
-        self.MailJson = {} # Mail Data
 
-        for category in ["INBOX", "Sent_Messages", "Deleted_Messages"]:
-            self.MailJson[category] = []
-        
+        self.initDirPath = ".\iCloud Mail"
         if not os.path.exists(self.initDirPath):
             os.makedirs(self.initDirPath)
 
+        self.MailJson = {} # Mail Data
+        for category in ["INBOX", "Sent_Messages", "Deleted_Messages"]:
+            self.MailJson[category] = []
+        
+        
         # Create Sub Directories in initDirPath (".\iCloud Mail")
         # for subDir in ["INBOX", "Sent Messages", "Deleted Messages"]:
         #     subDirPath = os.path.join(self.initDirPath, subDir)
