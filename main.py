@@ -1,6 +1,7 @@
 import os
 import sys
-import iCloud_Login, iCloud_Mail
+import iCloud_Login
+import iCloud_Mail
 from pyfiglet import Figlet
 from termcolor import colored
 
@@ -43,14 +44,49 @@ def Get_iCloud_Authentication_Session():
         if Number == 0:
             print(colored("\n[Shut Down]", 'yellow'))
             sys.exit()
-
         elif Number == 1:
             print(colored("\n[File Based Session Authentication]", 'yellow'))
             return iCloud_Login.Authentication_FileToken()
-
         elif Number == 2:
             print(colored("\n[Login Based Session Authentication]", 'yellow'))
             return iCloud_Login.Authentication_NewToken()
+
+        elif Number == 3:
+            os.system('cls')
+            continue
+        else:
+            print("[Invalid Number] Try Again!")
+
+# iCloud Explorer menu
+
+
+def iCloud_Explorer(Account_Session: dict):  # Require Session Json
+
+    while True:
+        print(colored("\n[iCloud Explorer Menu]", 'yellow'))
+        print("iCloud Explorer menu is consist of many kinds of iCloud services. (iCloud Drive, iCloud Mail iCloud pages etc)")
+        print("You can see meta data or information about iCloud Services you choose on your terminal")
+        print("Moreover, If you want to satve it, you can export to your path after make it to any files. (Format: Json, HTML, DataBase etc)")
+        print("Select the iCloud Service you want to analysis abou it.")
+
+        print("#    0. EXIT                                     #")
+        print("#    1. iCloud Drive                             #")
+        print("#    2. iCloud Mail                              #")
+        print("#    3. Show Menu List Again                     #\n")
+
+        Number = int(input(colored("Select Explorer Menu: ", 'yellow')))
+
+        if Number == 0:
+            print(colored("\n[Shut Down]", 'yellow'))
+            sys.exit()
+
+        elif Number == 1:
+            print(colored("\n[iCloud Drive]", 'yellow'))
+            # iCloud_Drive.Forensic(Account_Session)
+
+        elif Number == 2:
+            print(colored("\n[iCloud Mail]", 'yellow'))
+            iCloud_Mail.Forensic(Account_Session)
 
         elif Number == 3:
             os.system('cls')
@@ -69,7 +105,5 @@ if __name__ == "__main__":
     # Get User Account Session
     Account_Session = Get_iCloud_Authentication_Session()
 
-    # iCloud Drive
-
-    # iCloud Mail
-    iCloud_Mail.Forensic(Account_Session)
+    # iCloud Explorer Menu
+    iCloud_Explorer(Account_Session)
