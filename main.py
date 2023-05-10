@@ -53,6 +53,7 @@ def Get_iCloud_Authentication_Session():
             return iCloud_Login.Authentication_NewToken()
 
         elif Number == 3:
+            os.system('cls')
             continue
 
         else:

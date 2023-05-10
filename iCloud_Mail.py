@@ -29,11 +29,11 @@ def Forensic(Account_Session : dict):
         print("If you want to download the attachments for some mail, you'll be able to export the file to your input path.")
         print("Furthermore, If you want to see the contents more clearly for some mail, you can download the HTML file to your input path.\n")
 
-        print("#    0. EXIT (Move to Main Category)             #")
-        print("#    1. INBOX Forensics                          #")
-        print("#    2. Sent Messages Forensics                  #")
-        print("#    3. Deleted Messages Forensics               #")
-        print("#    4. Show Menu List Again                     #\n")
+        print("#    0. EXIT (Move to Main Category)                                            #")
+        print("#    1. Start iCloud Mail Forensics (INBOX, Sent Messages, Deleted Messages)    #")
+        print("#    2. Show Account Mail Data                                                  #")
+        print("#    3. Export Account Mail Data (Format: DataBase)                             #")
+        print("#    4. Show Menu List Again                                                    #\n")
 
         Number = int(input(colored("Select Mail Menu: ", 'yellow')))
 
@@ -42,16 +42,16 @@ def Forensic(Account_Session : dict):
             sys.exit()
 
         elif Number == 1:
-            print(colored("\n[INBOX Forensics ]", 'yellow'))
-            iCloud_Mail_Class.INBOX_Request()
+            print(colored("\n[iCloud Mail Forensics]", 'yellow'))
+            iCloud_Mail_Class.Mail_Request()
 
         elif Number == 2:
-            print(colored("\n[Sent Messages Forensics]", 'yellow'))
-            iCloud_Mail_Class.Sent_Messages_Request()
-
+            print(colored("\n[Show Account Mail Data]", 'yellow'))
+            iCloud_Mail_Class.Show_Mail_Data()
+        
         elif Number == 3:
-            print(colored("\n[Deleted Messages Forensics]", 'yellow'))
-            iCloud_Mail_Class.Deleted_Messages()
+            print(colored("\n[Export Account Mail Data]", 'yellow'))
+            iCloud_Mail_Class.Save_Mail_Data()            
 
         elif Number == 4:
             continue
@@ -67,208 +67,207 @@ class iCloud_Account_Mail:
     def __init__(self, Account_Session : dict):
         self.cookies = Account_Session["AccountSessions"] # dict
         self.initDirPath = ".\iCloud Mail"
+        self.MailJson = {} # Mail Data
 
+        for category in ["INBOX", "Sent_Messages", "Deleted_Messages"]:
+            self.MailJson[category] = []
+        
         if not os.path.exists(self.initDirPath):
             os.makedirs(self.initDirPath)
 
         # Create Sub Directories in initDirPath (".\iCloud Mail")
-        for subDir in ["INBOX", "Sent Messages", "Deleted Messages"]:
-            subDirPath = os.path.join(self.initDirPath, subDir)
-            if not os.path.exists(subDirPath):
-                os.makedirs(subDirPath)
+        # for subDir in ["INBOX", "Sent Messages", "Deleted Messages"]:
+        #     subDirPath = os.path.join(self.initDirPath, subDir)
+        #     if not os.path.exists(subDirPath):
+        #         os.makedirs(subDirPath)
 
-    # Make a Database File in INBOX path
-    def INBOX_Request(self):
+
+    def Mail_Request(self):
+        # Start Request
+         for category in ["INBOX", "Sent_Messages", "Deleted_Messages"]:
+            _category = category.replace('_',' ')
+
+            try:
+                requestURL = "https://p31-mailws.icloud.com/wm/message"
+
+                header = {
+                    'Content-Type': 'application/json',
+                    'Referer': 'https://www.icloud.com/',
+                    'Accept': '*/*',
+                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/603.3.1 (KHTML, like Gecko) Version/10.1.2 Safari/603.3.1',
+                    'Origin': 'https://www.icloud.com',
+                }
+
+                data = {
+                    "jsonrpc": "2.0",
+                    "id": str(int(mktime(datetime.now().timetuple())*1000)) + "/1",
+                    "method": "list",
+                    "params": {
+                        "guid": f"folder:{_category}",
+                        "sorttype": "Date",
+                        "sortorder": "descending",
+                        "searchtype": "null",
+                        "searchtext": "null",
+                        "requesttype": "index",
+                        "responsetype": "hybrid",
+                        "selected": 1,
+                        "count": 50,
+                        "rollbackslot": "0.0"
+                    }
+                }
+
+                postData = json.dumps(data)
+                response = requests.post(
+                    url=requestURL, headers=header, data=postData, cookies=self.cookies, proxies=proxies, verify=False)
+                responseJson = json.loads(response.text)
+
+                # Second Request to get preview
+                preview_data = {
+                    "jsonrpc": "2.0",
+                    "id": str(int(mktime(datetime.now().timetuple())*1000)) + "/1",
+                    "method": "preview",
+                    "params": {
+                        "folder": f"folder:{_category}",
+                        "ids": [ mail["previewId"] for mail in responseJson["result"][1:]]
+                    }
+                }
+
+                postData = json.dumps(preview_data)
+                response = requests.post(
+                    url=requestURL, headers=header, data=postData, cookies=self.cookies, proxies=proxies, verify=False)
+                responsePreview = json.loads(response.text)
+
+                # parsing logic
+                for mail, preview in zip(responseJson["result"][1:], responsePreview["result"]):
+                    Mail_Data = {} # dict
+                    Mail_Data["Timestamp"] = self.Sent_Messages_Convert_KST(mail["sentdate"])
+                    Mail_Data["guid"] = mail["guid"]
+                    Mail_Data["folder"] = mail["folder"]
+                    Mail_Data["Recipient"] = mail["to"]
+                    Mail_Data["Sender"] = mail["from"]
+                    Mail_Data["Title"] = mail["subject"]
+                    Mail_Data["PreviewId"] = mail["previewId"]
+                    Mail_Data["Preview"] = preview["preview"]
+                    Mail_Data["HasAttachment"] = "True" if mail.get("hasAttachment") != None else "False"
+
+                    # Attachment parsing        
+                    Mail_Data["parts"] = []
+
+                    for attachment in mail["parts"]:
+                        part = {}
+                        part["pguid"] = attachment["guid"]
+                        part["datatype"] = attachment["datatype"]
+                        part["name"] = attachment.get("name")
+                        part["url"] = attachment["url"]
+                        part["size"] = attachment["size"]
+                        Mail_Data["parts"].append(part)
+
+                    Mail_Data["NumOfAttachment"] = len(Mail_Data["parts"]) - 1
+                    
+                    self.MailJson[category].append(Mail_Data)
+
+                print(colored(f"[Success] {category} Forensics", 'blue'))
+
+            except requests.exceptions.RequestException as e:
+                print(f"[Fail] {category} Request", e)
+
+    def Show_Mail_Data(self):
+
+        if (self.MailJson["INBOX"], self.MailJson["Sent_Messages"], self.MailJson["Deleted_Messages"]) == ([], [], []):
+            print("[Empty Mailbox] Check whether you perform \"Start iCloud Mail Forensics (INBOX, Sent Messages, Deleted Messages)\" menu.\n")
+            return
+
+        category = {1:"INBOX", 2:"Sent_Messages", 3:"Deleted_Messages"}
+
+        while True:
+            print("#    0. EXIT (Move to Mail Category)         #")
+            print("#    1. Show INBOX                           #")
+            print("#    2. Show Sent Messages                   #")
+            print("#    3. Show Deleted Messages                #")
+            print("#    4. Show Menu List Again                 #\n")
+
+            Number = int(input(colored("Select Show Mail Menu: ", 'yellow')))
+
+            if Number == 0: break
+
+            elif Number in [1, 2, 3]:
+                print(colored(f"\n[Show {category[Number]}]", 'blue'))
+                print(f"\n■ {category[Number]} Count:", len(self.MailJson["INBOX"]))
+                print("\n---------------------------------------------------------------------------------------\n")
+
+                for i, mail in enumerate(self.MailJson[category[Number]]):
+                    print("● Index:", i+1)
+                    for key, value in mail.items():
+                        print('●', key+':', value)
+                    print("\n---------------------------------------------------------------------------------------\n")
+
+            elif Number == 4:
+                os.system('cls')
+                continue
+
+            else:
+                print("[Invalid Number] Try Again!")
+
+
+    def Save_Mail_Data(self):
         # Init DB File
-        DBName = datetime.now().strftime("%y%m%d_%H%M%S_INBOX.db")
-        PATH = os.path.join(self.initDirPath, "INBOX", DBName)
+        DBName = "iCloud_Mail.db"
+        PATH = os.path.join(self.initDirPath, DBName)
         connect = sqlite3.connect(PATH)
         cursor = connect.cursor()
+        
+        for Table in ["INBOX", "Sent_Messages", "Deleted_Messages"]:
 
-        script = """
-        CREATE TABLE INBOX(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            Received_Timestamp TEXT NOT NULL,
-            ThreadId TEXT NOT NULL,
-            Senders TEXT NOT NULL,
-            Title TEXT NOT NULL,
-            Preview TEXT NOT NULL,
-            IsSeen TEXT NOT NULL,
-            HasAttachment TEXT NOT NULL,
-            ToMe TEXT NOT NULL
-        );
-        """
+            # Create DB Table
+            script = f"""
+            DROP TABLE IF EXISTS {Table};
 
-        cursor.executescript(script)
-        connect.commit()
+            CREATE TABLE {Table}(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                Timestamp TEXT NOT NULL,
+                guid TEXT NOT NULL,
+                folder TEXT NOT NULL,
+                Recipient TEXT NOT NULL,            
+                Sender TEXT NOT NULL,            
+                Title TEXT NOT NULL,
+                PreviewId TEXT NOT NULL,
+                Preview TEXT NOT NULL,
+                HasAttachment TEXT NOT NULL,
+                NumOfAttachment TEXT NOT NULL,
+                Parts TEXT NOT NULL
+            );
+            """
 
-        # Start Request
-        try:
-            requestURL = "https://p125-mccgateway.icloud.com/mailws2/v1/thread/search"
+            cursor.executescript(script)
+            connect.commit()
 
-            header = {
-                'Content-Type': 'application/json',
-                'Referer': 'https://www.icloud.com/',
-                'Accept': '*/*',
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/603.3.1 (KHTML, like Gecko) Version/10.1.2 Safari/603.3.1',
-                'Origin': 'https://www.icloud.com',
-            }
+            # Insert Mail Record
+            Table_Query = f"""
+            INSERT INTO {Table}(
+                Timestamp, guid, folder, Recipient,
+                Sender, Title, PreviewId, Preview, 
+                HasAttachment, NumOfAttachment, Parts)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?);
+            """
 
-            data = {
-                "responseType": "THREAD_DIGEST",
-                "maxResults": 6,
-                "includeFolderStatus": "true",
-                "sessionHeaders": {
-                    "condstore": 1,
-                    "folder": "INBOX",
-                    "modseq": "null",
-                    "qresync": 1,
-                    "threadmode": 1,
-                    "threadmodseq": "null"
-                }
-            }
+            Table_Data = []
 
-            postData = json.dumps(data)
-            response = requests.post(
-                url=requestURL, headers=header, data=postData, cookies=self.cookies, proxies=proxies, verify=False)
-
-            responseJson = json.loads(response.text)
-
-            for mail in responseJson["threadList"]:
-                flags = ["True" if _ in mail["flags"] else "False" for _ in ["\\Seen", "\\HasAttachment", "\\ToMe"]]
-                KST = self.INBOX_Convert_KST(mail["timestamp"])
-
-                query = """
-                INSERT INTO INBOX(
-                    Received_Timestamp, ThreadId,
-                    Senders, Title, Preview,
-                    IsSeen, HasAttachment, ToMe) VALUES (?,?,?,?,?,?,?,?);
-                """
-
-                data = (KST, mail["threadId"], 
-                    str(mail["senders"])[1:-1], mail["subject"], mail["preview"], 
-                    flags[0], flags[1], flags[2]
+            for mail in self.MailJson[Table]:
+                data = (
+                    mail["Timestamp"], mail["guid"], mail["folder"], str(mail["Recipient"]),
+                    mail["Sender"], mail["Title"], mail["PreviewId"], mail["Preview"],
+                    mail["HasAttachment"], str(mail["NumOfAttachment"]), str(mail["parts"])
                 )
+                Table_Data.append(data)
 
-                cursor.execute(query, data)
-                connect.commit()
+            cursor.executemany(Table_Query, Table_Data)
+            connect.commit()
 
-        except requests.exceptions.RequestException as e:
-            print("[Fail] INBOX Request", e)
-
+        print(f"[Success] Export the iCloud Mail DataBase File : {PATH}" + "\n")
         connect.close()
 
-
-    def Sent_Messages_Request(self):
-        # Init DB File
-        DBName = datetime.now().strftime("%y%m%d_%H%M%S_Sent_Messages.db")
-        PATH = os.path.join(self.initDirPath, "Sent Messages", DBName)
-        connect = sqlite3.connect(PATH)
-        cursor = connect.cursor()
-
-        script = """
-        CREATE TABLE Sent_Messages(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            Sent_Timestamp TEXT NOT NULL,
-            guid TEXT NOT NULL,
-            folder TEXT NOT NULL,
-            Recipient TEXT NOT NULL,            
-            Sender TEXT NOT NULL,            
-            Title TEXT NOT NULL,
-            Preview TEXT NOT NULL,
-            PreviewId TEXT NOT NULL,
-            parts TEXT NOT NULL,
-            HasAttachment TEXT NOT NULL
-        );
-        """
-
-        cursor.executescript(script)
-        connect.commit()
-
-        # Start Request
-        try:
-            requestURL = "https://p31-mailws.icloud.com/wm/message"
-
-            header = {
-                'Content-Type': 'application/json',
-                'Referer': 'https://www.icloud.com/',
-                'Accept': '*/*',
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/603.3.1 (KHTML, like Gecko) Version/10.1.2 Safari/603.3.1',
-                'Origin': 'https://www.icloud.com',
-            }
-
-            data = {
-                "jsonrpc": "2.0",
-                "id": str(int(mktime(datetime.now().timetuple())*1000)) + "/1",
-                "method": "list",
-                "params": {
-                    "guid": "folder:Sent Messages",
-                    "sorttype": "Date",
-                    "sortorder": "descending",
-                    "searchtype": "null",
-                    "searchtext": "null",
-                    "requesttype": "index",
-                    "responsetype": "hybrid",
-                    "selected": 1,
-                    "count": 50,
-                    "rollbackslot": "0.0"
-                }
-            }
-
-            postData = json.dumps(data)
-            response = requests.post(
-                url=requestURL, headers=header, data=postData, cookies=self.cookies, proxies=proxies, verify=False)
-            responseJson = json.loads(response.text)
-
-            # Second Request to get preview
-            preview_data = {
-                "jsonrpc": "2.0",
-                "id": str(int(mktime(datetime.now().timetuple())*1000)) + "/1",
-                "method": "preview",
-                "params": {
-                    "folder": "folder:Sent Messages",
-                    "ids": [ mail["previewId"] for mail in responseJson["result"][1:]]
-                }
-            }
-
-            postData = json.dumps(preview_data)
-            response = requests.post(
-                url=requestURL, headers=header, data=postData, cookies=self.cookies, proxies=proxies, verify=False)
-            responsePreview = json.loads(response.text)
-
-            # parsing logic
-            for mail, preview in zip(responseJson["result"][1:], responsePreview["result"]):
-                
-                KST = self.Sent_Messages_Convert_KST(mail["sentdate"])
-                HasAttachment = "True" if mail.get("hasAttachment") != None else "False"
-                
-                query = """
-                INSERT INTO Sent_Messages(
-                    Sent_Timestamp, guid, folder, Recipient, Sender,
-                    Title, Preview, PreviewId, 
-                    parts, HasAttachment) VALUES (?,?,?,?,?,?,?,?,?,?);
-                """
-
-                data = (KST, mail["guid"], mail["folder"], str(mail["to"])[1:-1], mail["from"],
-                    mail["subject"], preview["preview"], mail["previewId"],
-                    str(mail["parts"]), HasAttachment
-                )
-
-                cursor.execute(query, data)
-                connect.commit()
-
-        except requests.exceptions.RequestException as e:
-            print("[Fail] Sent Messages Request", e)
-
-        connect.close()
-
-    def Deleted_Messages(self):
-        pass
-
-    # Convert UTC+9 (INBOX) 1683533164203 -> 2023-05-08 17:06:04
-    def INBOX_Convert_KST(self, Timestamp):
-        return strftime("%Y-%m-%d %H:%M:%S", localtime(Timestamp / 1000))
-
-    # Convert UTC+9 (INBOX) Mon, 08 May 2023 08:02:16 -0000 -> 2023-05-08 17:02:16
+    # Convert UTC+9 Mon, 08 May 2023 08:02:16 -0000 -> 2023-05-08 17:02:16
     def Sent_Messages_Convert_KST(self, Timestamp):
-        return datetime.strptime(Timestamp, '%a, %d %b %Y %H:%M:%S -0000') + timedelta(hours=9)
+        Timestamp = Timestamp[:31] if len(Timestamp) > 31 else Timestamp
+        convertTime = datetime.strptime(Timestamp[:-6], '%a, %d %b %Y %H:%M:%S')
+        return convertTime + timedelta(hours=9-int(Timestamp[-5:-2]))

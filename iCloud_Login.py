@@ -107,7 +107,6 @@ def input_iCloud_Credential():
         # Case of newline
         if pwChar == b'\r':
             print()
-            print(iCloud_PW)
             break
 
         # Case of backspace
