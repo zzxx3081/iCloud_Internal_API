@@ -22,6 +22,9 @@ def Main_intro():
 # Get iCloud Session Data
 def Get_iCloud_Authentication_Session():
 
+     # Intro
+    Main_intro()
+
     while True:
         print(colored("\n[iCloud Authentication Menu]", 'yellow'))
         print("Select the Method of iCloud Authentication! There are Two Authentication methods.")
@@ -43,12 +46,15 @@ def Get_iCloud_Authentication_Session():
         Number = int(input(colored("Select Authentication Menu: ", 'yellow')))
 
         if Number == 0:
+            os.system('cls')
             print(colored("\n[Shut Down]", 'yellow'))
             sys.exit()
         elif Number == 1:
+            os.system('cls')
             print(colored("\n[File Based Session Authentication]", 'yellow'))
             return iCloud_Login.Authentication_FileToken()
         elif Number == 2:
+            os.system('cls')
             print(colored("\n[Login Based Session Authentication]", 'yellow'))
             return iCloud_Login.Authentication_NewToken()
 
@@ -56,6 +62,7 @@ def Get_iCloud_Authentication_Session():
             os.system('cls')
             continue
         else:
+            os.system('cls')
             print("[Invalid Number] Try Again!")
 
 # iCloud Explorer menu
@@ -68,22 +75,22 @@ def iCloud_Explorer(Account_Session: dict):  # Require Session Json
         print("iCloud Explorer menu is consist of many kinds of iCloud services. (iCloud Drive, iCloud Mail iCloud pages etc)")
         print("You can see meta data or information about iCloud Services you choose on your terminal")
         print("Moreover, If you want to satve it, you can export to your path after make it to any files. (Format: Json, HTML, DataBase etc)")
-        print("Select the iCloud Service you want to analysis abou it.")
+        print("Select the iCloud Service you want to analysis abou it.\n")
 
-        print("#    0. EXIT                                     #")
-        print("#    1. iCloud Drive                             #")
-        print("#    2. iCloud Mail                              #")
-        print("#    3. Show Menu List Again                     #\n")
+        print("#    0. EXIT (Move to iCloud Authentication Menu)        #")
+        print("#    1. iCloud Drive                                     #")
+        print("#    2. iCloud Mail                                      #")
+        print("#    3. Show Menu List Again                             #\n")
 
         Number = int(input(colored("Select Explorer Menu: ", 'yellow')))
 
         if Number == 0:
-            print(colored("\n[Shut Down]", 'yellow'))
-            sys.exit()
+            print(colored("\n[Move to iCloud Authentication]", 'yellow'))
+            Get_iCloud_Authentication_Session()
 
         elif Number == 1:
             print(colored("\n[iCloud Drive]", 'yellow'))
-            # iCloud_Drive.Forensic(Account_Session)
+            iCloud_Drive.Forensic(Account_Session)
 
         elif Number == 2:
             print(colored("\n[iCloud Mail]", 'yellow'))
@@ -99,9 +106,6 @@ def iCloud_Explorer(Account_Session: dict):  # Require Session Json
 
 # main
 if __name__ == "__main__":
-
-    # Intro
-    Main_intro()
 
     # Get User Account Session
     Account_Session = Get_iCloud_Authentication_Session()

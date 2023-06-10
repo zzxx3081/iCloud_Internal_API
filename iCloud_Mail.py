@@ -1,8 +1,8 @@
-import os, sys, shutil
+import os, shutil
 import requests, json, urllib3
 import sqlite3
 from datetime import datetime, timedelta
-from time import localtime, strftime, mktime
+from time import mktime
 from termcolor import colored
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -15,6 +15,8 @@ proxies = {
 
 # Start iCloud Mail Forensics
 def Forensic(Account_Session : dict):
+    os.system('cls')
+
     iCloud_Mail_Class = iCloud_Account_Mail(Account_Session)
 
     while True:
@@ -24,7 +26,7 @@ def Forensic(Account_Session : dict):
         print(colored("[Sent Messages] It is means a sent mailbox, You would be able to check the contents of all sent mails.", 'green'))
         print(colored("[Deleted Messages] It is means a trash can, You would be possible to see the list of deleted mails.\n", 'green'))
 
-        print("iCloud mail is consist of Title, Contens and Attachments.")
+        print("iCloud mail is consist of Title, Contents and Attachments.")
         print("iCloud breaker exports a \"Database File\" which composed with Tables. (Date, Incoming Mail, Outgoing Mail, Title, Contents, Attachments etc) ")
         print("If you want to download the attachments for some mail, you'll be able to export the file to your input path.")
         print("Furthermore, If you want to see the contents more clearly for some mail, you can download the HTML file to your input path.\n")
@@ -40,26 +42,32 @@ def Forensic(Account_Session : dict):
         Number = int(input(colored("Select Mail Menu: ", 'yellow')))
 
         if Number == 0:
+            os.system('cls')
             print(colored("\n[Move to Main Category]", 'yellow'))
-            sys.exit()
+            break
 
         elif Number == 1:
+            os.system('cls')
             print(colored("\n[iCloud Mail Forensics]", 'yellow'))
             iCloud_Mail_Class.Mail_Request()
 
         elif Number == 2:
+            os.system('cls')
             print(colored("\n[Show Account Mail Data]", 'yellow'))
             iCloud_Mail_Class.Show_Mail_Data()
         
         elif Number == 3:
+            os.system('cls')
             print(colored("\n[Export Account Mail Data]", 'yellow'))
             iCloud_Mail_Class.Save_Mail_Data()
 
         elif Number == 4:
+            os.system('cls')
             print(colored("\n[Export Contents Mail Data]", 'yellow'))
             iCloud_Mail_Class.Save_Mail_Contents_Data()            
 
         elif Number == 5:
+            os.system('cls')
             print(colored("\n[Export Attachment Mail Data]", 'yellow'))
             iCloud_Mail_Class.Save_Mail_Attachment_Data()
 
@@ -85,14 +93,6 @@ class iCloud_Account_Mail:
         self.MailJson = {} # Mail Data
         for category in ["INBOX", "Sent_Messages", "Deleted_Messages"]:
             self.MailJson[category] = []
-        
-        
-        # Create Sub Directories in initDirPath (".\iCloud Mail")
-        # for subDir in ["INBOX", "Sent Messages", "Deleted Messages"]:
-        #     subDirPath = os.path.join(self.initDirPath, subDir)
-        #     if not os.path.exists(subDirPath):
-        #         os.makedirs(subDirPath)
-
 
     def Mail_Request(self):
         # Start Request
@@ -200,18 +200,21 @@ class iCloud_Account_Mail:
 
             Number = int(input(colored("Select Show Mail Menu: ", 'yellow')))
 
-            if Number == 0: break
+            if Number == 0:
+                os.system('cls')
+                break
 
             elif Number in [1, 2, 3]:
                 print(colored(f"\n[Show {category[Number]}]", 'blue'))
                 print(f"\n■ {category[Number]} Count:", len(self.MailJson[category[Number]]))
-                print("\n---------------------------------------------------------------------------------------\n")
+                print("\n" + "-" * 85 +"\n")
 
                 for i, mail in enumerate(self.MailJson[category[Number]]):
                     print("● Index:", i+1)
                     for key, value in mail.items():
                         print('●', key+':', value)
-                    print("\n---------------------------------------------------------------------------------------\n")
+                    print("\n" + "-" * 85 +"\n")
+
 
             elif Number == 4:
                 os.system('cls')
@@ -222,6 +225,11 @@ class iCloud_Account_Mail:
 
 
     def Save_Mail_Data(self):
+
+        if (self.MailJson["INBOX"], self.MailJson["Sent_Messages"], self.MailJson["Deleted_Messages"]) == ([], [], []):
+            print("[Empty Mailbox] Check whether you perform \"Start iCloud Mail Forensics (INBOX, Sent Messages, Deleted Messages)\" menu.\n")
+            return
+
         # Init DB File
         DBName = "iCloud_Mail.db"
         PATH = os.path.join(self.initDirPath, DBName)
@@ -275,10 +283,16 @@ class iCloud_Account_Mail:
             cursor.executemany(Table_Query, Table_Data)
             connect.commit()
 
-        print(f"[Success] Export the iCloud Mail DataBase File : {PATH}" + "\n")
+        print(colored(f"[Success] Export the iCloud Mail DataBase File : {PATH}" + "\n", 'blue'))
         connect.close()
 
     def Save_Mail_Attachment_Data(self):
+
+        if (self.MailJson["INBOX"], self.MailJson["Sent_Messages"], self.MailJson["Deleted_Messages"]) == ([], [], []):
+            print("[Empty Mailbox] Check whether you perform \"Start iCloud Mail Forensics (INBOX, Sent Messages, Deleted Messages)\" menu.\n")
+            return
+
+
         PATH = os.path.join(self.initDirPath, ".\iCloud Mail Attachment")
         if not os.path.exists(PATH):
             os.makedirs(PATH)
@@ -317,6 +331,12 @@ class iCloud_Account_Mail:
 
 
     def Save_Mail_Contents_Data(self):
+
+
+        if (self.MailJson["INBOX"], self.MailJson["Sent_Messages"], self.MailJson["Deleted_Messages"]) == ([], [], []):
+            print("[Empty Mailbox] Check whether you perform \"Start iCloud Mail Forensics (INBOX, Sent Messages, Deleted Messages)\" menu.\n")
+            return
+
         PATH = os.path.join(self.initDirPath, ".\iCloud Mail Contents")
 
         if not os.path.exists(PATH):

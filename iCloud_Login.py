@@ -61,8 +61,8 @@ def Authentication_NewToken() -> dict:
 
             while not os.path.exists(iCloud_Session_Path):
                 print(colored("\n[Invalid Path] Try Again!\n", 'yellow'))
-                iCloud_Session_Path = input(
-                    colored("iCloud Session Path: ", 'yellow'))
+                iCloud_Session_Path = dequote(input(
+                    colored("iCloud Session Path: ", 'yellow')))
 
             iCloud_Login_Class.saveSession(iCloud_Session_Path)
             break
@@ -87,8 +87,8 @@ def Authentication_FileToken() -> dict:
 
     while not os.path.exists(Local_Session_Path):
         print(colored("\n[Invalid Path] Try Again!\n", 'yellow'))
-        Local_Session_Path = input(
-            colored("Local Session File Path: ", 'yellow'))
+        Local_Session_Path = dequote(input(
+            colored("Local Session File Path: ", 'yellow')))
 
     iCloud_Session_Class = Session()
 

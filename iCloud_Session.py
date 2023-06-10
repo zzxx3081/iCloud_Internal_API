@@ -1,5 +1,5 @@
 import os, json, datetime
-
+from termcolor import colored
 
 class Session:
     # Session Init (Format : dict)
@@ -19,7 +19,7 @@ class Session:
         with open(fullPath, 'w', encoding='UTF-8') as outSessionFile:
             json.dump(self.SessionJson, outSessionFile, indent=4, ensure_ascii=False)
 
-        print(f"[Success] Save the Session File : {fullPath}" + "\n")
+        print(colored(f"[Success] Save the Session File : {fullPath}" + "\n", 'blue'))
 
     # Read Session Data
     def readSession(self, filePath):
@@ -27,7 +27,7 @@ class Session:
             with open(filePath, 'r', encoding='UTF-8') as InSessionFile:
                 self.SessionJson = json.load(InSessionFile)
 
-            print(f"[Success] Read the Session File : {filePath}" + "\n")
+            print(colored(f"\n[Success] Read the Session File : {filePath}" + "\n", 'blue'))
             return self.SessionJson
         except Exception as e:
             print("[Fail] Invalid Session path", e)
