@@ -11,8 +11,8 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Fiddler Local proxy
 proxies = {
-    # 'http': 'http://127.0.0.1:8888',
-    # 'https': 'http://127.0.0.1:8888'
+    'http': 'http://127.0.0.1:8888',
+    'https': 'http://127.0.0.1:8888'
 }
 
 
@@ -26,6 +26,7 @@ def Authentication_NewToken() -> dict:
 
     print(colored("Submit your iCloud Account Information.", 'green'))
     iCloud_ID, iCloud_PW = input_iCloud_Credential()
+    TrustToken = ''
 
     while True:
         print(colored("\nDo you know the Account's TrustToken? (Y/N)", 'yellow'))
@@ -45,7 +46,7 @@ def Authentication_NewToken() -> dict:
             print(colored("\n[Invalid Input] Try Again!\n", 'yellow'))
 
     # Login Based Session Authentication Start!
-    iCloud_Login_Class = iCloud_Account_Session(iCloud_ID, iCloud_PW)
+    iCloud_Login_Class = iCloud_Account_Session(iCloud_ID, iCloud_PW, TrustToken)
 
     # Check whether to save the Session Data or not
     while True:
