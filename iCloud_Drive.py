@@ -7,14 +7,13 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Fiddler Local proxy
 proxies = {
-    'http': 'http://127.0.0.1:8888',
-    'https': 'http://127.0.0.1:8888'
+    # 'http': 'http://127.0.0.1:8888',
+    # 'https': 'http://127.0.0.1:8888'
 }
 
 
 def Forensic(Account_Session : dict):
     os.system('cls')
-
     iCloud_Drive_Class = iCloud_Account_Drive(Account_Session)
 
     while True:
@@ -25,8 +24,9 @@ def Forensic(Account_Session : dict):
 
         print("#    0. EXIT (Move to Main Category)                                            #")
         print("#    1. Start iCloud Drive Forensics (Live, Trash)                              #")
-        print("#    2. Show Account Drive Data                                                 #")
-        print("#    3. Show Menu List Again                                                    #\n")
+        print("#    2. Show Account Drive Tree                                                 #")
+        print("#    3. Show Account Drive Meta Data                                            #")
+        print("#    4. Show Menu List Again                                                    #\n")
 
         Number = int(input(colored("Select Drive Menu: ", 'yellow')))
 
@@ -44,10 +44,15 @@ def Forensic(Account_Session : dict):
             print(colored(f"[Success] Trash Forensics", 'blue'))
 
         elif Number == 2:
-            print(colored("\n[Show Account Drive Data]", 'yellow'))
-            iCloud_Drive_Class.Show_Drive_Data()
+            print(colored("\n[Show Account Drive Tree]", 'yellow'))
+            iCloud_Drive_Class.Show_Drive_Tree()
 
         elif Number == 3:
+            print(colored("\n[Show Account Drive Meta Data]", 'yellow'))
+            iCloud_Drive_Class.Show_Drive_Meta()
+            continue
+        
+        elif Number == 4:
             os.system('cls')
             continue
 
@@ -91,7 +96,7 @@ def Forensic(Account_Session : dict):
 
 class iCloud_Drive_Node:
     def __init__(self):
-        self.Parent = None # iCloud_Drive_Node
+        self.Parent = None # iCloud_Drive_Node 루트 초기화
         self.Children = [] # iCloud_Drive_Node List
         self.File = [] # dict List
         self.Folder = {} # dict List
@@ -119,14 +124,10 @@ class iCloud_Account_Drive:
         root = "FOLDER::com.apple.CloudDocs::root"
         self.Drive_Folder(self.DriveJson["Live"], None, root)
 
-        # print(json.dumps(self.DriveJson["Live"].Folder, indent=4, ensure_ascii=False))
-        # print(json.dumps(self.DriveJson["Live"].File, indent=4, ensure_ascii=False))
-
     #Get Drive Trash Meta Data
     def Drive_Trash_Request(self):
-        # root = ""
-        # self.Drive_Folder(self.DriveJson["Trash"], None, root)
-        pass
+        root = "TRASH_ROOT"
+        self.Drive_Trash_Folder(self.DriveJson["Trash"], root) # 부모노드 존재하지 않음
 
     # Node: Present, Parent: Parent Node, drivewsid: Folder ID
     def Drive_Folder(self, Node: iCloud_Drive_Node, Parent: iCloud_Drive_Node, drivewsid: str):
@@ -195,9 +196,7 @@ class iCloud_Account_Drive:
                 
                 # 현재 파일 정보
                 else:
-
                     subFile = {}
-
                     subFile["dateCreated"] = self.Time_Convert(item["dateCreated"])
                     subFile["drivewsid"] = item["drivewsid"]
                     subFile["docwsid"] = item["docwsid"]
@@ -220,25 +219,80 @@ class iCloud_Account_Drive:
         except requests.exceptions.RequestException as e:
             print("[Fail] Drive Live Request", e)
 
-    # Show iCloud Drive Meta Data
-    def Show_Drive_Data(self):
+    # Trash Folder 탐색
+    def Drive_Trash_Folder(self, Node: iCloud_Drive_Node, drivewsid: str): # drivewsid: TRASH_ROOT
+        try:
+            requestURL = "https://p125-drivews.icloud.com/retrieveItemDetailsInFolders?appIdentifier=iclouddrive"
+
+            header = {
+                'Content-Type': 'application/json',
+                'Referer': 'https://www.icloud.com/',
+                'Accept': '*/*',
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/603.3.1 (KHTML, like Gecko) Version/10.1.2 Safari/603.3.1',
+                'Origin': 'https://www.icloud.com',
+            }
+
+            data = [{
+                "drivewsid": drivewsid,
+                "partialData":"false",
+                "includeHierarchy":"true"
+            }]
+
+            postData = json.dumps(data)
+            response = requests.post(
+                url=requestURL, headers=header, data=postData, cookies=self.cookies, proxies=proxies, verify=False)
+            responseJson = json.loads(response.text)[0]
+            
+            
+            # 폴더 정보 없음
+            Node.Folder["name"] = "TRASH_ROOT"
+            Node.Folder["drivewsid"] = responseJson["drivewsid"]
+            Node.Folder["numberOfItems"] = responseJson["numberOfItems"] # 폴더 안에 파일 + 폴더 수
+
+
+            # 파일 정보만
+            for item in responseJson["items"]:
+                subFile = {}
+                subFile["dateCreated"] = self.Time_Convert(item["dateCreated"])
+                subFile["drivewsid"] = item["drivewsid"]
+                subFile["docwsid"] = item["docwsid"]
+                subFile["zone"] = item["zone"]
+                subFile["name"] = item["name"]
+                subFile["extension"] = item["extension"]
+                subFile["parentId"] = item["parentId"]
+                subFile["dateExpiration"] = self.Time_Convert(item["dateExpiration"])
+                subFile["isChainedToParent"] = item["isChainedToParent"]
+                subFile["dateModified"] = self.Time_Convert(item["dateModified"])
+                subFile["dateChanged"] = self.Time_Convert(item["dateChanged"])
+                subFile["size"] = item["size"] # Bytes
+                subFile["etag"] = item["etag"]
+                subFile["restorePath"] = item["restorePath"]
+                subFile["shortGUID"] = item["shortGUID"]
+                subFile["lastOpenTime"] = self.Time_Convert(item["lastOpenTime"])
+                subFile["type"] = item["type"]
+
+                Node.File.append(subFile)
+
+        except requests.exceptions.RequestException as e:
+            print("[Fail] Drive Trash Request", e)
+
+    # Show iCloud Drive Tree
+    def Show_Drive_Tree(self):
 
         category = {1:"Live", 2:"Trash"}
 
         while True:
-            print("#    0. EXIT (Move to Drive Category)         #")
-            print("#    1. Show Live                            #")
-            print("#    2. Show Trash                           #")
+            print("#    0. EXIT (Move to Drive Category)        #")
+            print("#    1. Show Live Tree                       #")
+            print("#    2. Show Trash Tree                      #")
             print("#    3. Show Menu List Again                 #\n")
 
-            Number = int(input(colored("Select Show Drive Menu: ", 'yellow')))
+            Number = int(input(colored("Select Show Drive Tree Menu: ", 'yellow')))
 
             if Number == 0:
-                os.system('cls')
                 break
 
             elif Number in [1, 2]:
-                os.system('cls')
                 print(colored(f"\n[Show {category[Number]}]", 'blue'))
                 self.Show_Drive_Meta_Data_Structure(self.DriveJson[category[Number]])
 
@@ -254,17 +308,142 @@ class iCloud_Account_Drive:
         Interval = " " * 4
         newCount = count + 1
         
-        FolderInfo = (Interval * count) + "▶ " + Node.Folder["name"] + "    " + Node.Folder["docwsid"]
+        # 휴지통이랑 같이 쓰도록!
+        if Node.Folder.get("docwsid") == None: NodeID = Node.Folder["drivewsid"]
+        else: NodeID = Node.Folder["docwsid"]
+
+        FolderInfo = (Interval * count) + "▶ " + Node.Folder["name"] + "    " + NodeID
         print(FolderInfo)
 
         for subFolder in Node.Children:
             self.Show_Drive_Meta_Data_Structure(subFolder, newCount)
 
         for subFile in Node.File:
-            FileInfo = (Interval * newCount) + "◆ " + subFile["name"] + "    " + subFile["docwsid"]
+            subFileName = subFile["name"] + "." + subFile["extension"]
+            FileInfo = (Interval * newCount) + "◆ " + subFileName + "    " + subFile["docwsid"]
             print(FileInfo)
 
         print()
+
+    # Show Drive Meta Data
+    def Show_Drive_Meta(self):
+
+        print()
+
+        while True:
+            print("#    0. EXIT (Move to Drive Category)            #")
+            print("#    1. Search Live Folder Meta Data             #")
+            print("#    2. Search Live File Meta Data               #")
+            print("#    3. Search Trash File Meta Data              #")
+            print("#    4. Search All Meta Data                     #")
+            print("#    5. Show Menu List Again                     #\n")
+
+            Number = int(input(colored("Select Show Meta Data Menu: ", 'yellow')))
+
+            if Number == 0:
+                os.system('cls')
+                break
+            
+            elif Number == 1:
+                print(colored(f"\n[Search Live Folder Meta Data]", 'blue'))
+                data = input(colored("Input Live Folder Name or ID(docwid): ", 'yellow'))
+
+                if not self.Search_Meta_Data_Folder(self.DriveJson["Live"], data):
+                    print(colored("Invalid Name or ID(docwid)\n", 'red'))
+
+            elif Number == 2:
+                print(colored(f"\n[Search Live File Meta Data]", 'blue'))
+                data = input(colored("Input Live File Name(No extension) or ID(docwid): ", 'yellow'))
+
+                if not self.Search_Meta_Data_File(self.DriveJson["Live"], data):
+                    print(colored("Invalid Name(No extension) or ID(docwid)\n", 'red'))
+
+            elif Number == 3:
+                print(colored(f"\n[Search Trash File Meta Data]", 'blue'))
+                data = input(colored("Input Trash File Name(No extension) or ID(docwid): ", 'yellow'))
+
+                if not self.Search_Meta_Data_File(self.DriveJson["Trash"], data):
+                    print(colored("Invalid Name(No extension) or ID(docwid)\n", 'red'))
+
+            elif Number == 4:
+                print(colored(f"\n[Show All Live Meta Data]", 'yellow'))
+                self.Search_Meta_Data_File_All(self.DriveJson["Live"])
+                
+                print(colored(f"\n[Show All Trash Meta Data]", 'yellow'))
+                self.Search_Meta_Data_File_All(self.DriveJson["Trash"])
+                print()
+
+            else:
+                print("[Invalid Number] Try Again!")
+
+    # Node : Live Data or Trash Data, data : Input Name or ID(docwid)
+    def Search_Meta_Data_Folder(self, Node: iCloud_Drive_Node, data: str):
+        flag = False
+
+        if Node.Folder["name"] == data or Node.Folder["docwsid"] == data:
+            print("-" * 80)
+            for key, value in Node.Folder.items():
+                if key == "Parent": continue
+                print(colored(str(key) + " ▶ " + str(value), 'blue'))
+            print("-" * 80 + '\n')
+            return True # Success
+        
+        else:
+            for subFolder in Node.Children:
+                flag = self.Search_Meta_Data_Folder(subFolder, data)
+                if flag: return flag
+
+        return flag
+    
+    # Node : Live Data or Trash Data, data : Input Name or ID(docwid) 
+    def Search_Meta_Data_File(self, Node: iCloud_Drive_Node, data: str):
+        print()
+        flag = False
+    
+        for subFile in Node.File:
+            if subFile["name"] == data or subFile["docwsid"] == data:
+                print("-" * 80)
+                for key, value in subFile.items():
+                    print(colored(str(key) + " ▶ " + str(value), 'blue'))
+                print("-" * 80 + '\n')
+                return True # Success
+            
+        for subFolder in Node.Children:
+            flag = self.Search_Meta_Data_File(subFolder, data)
+            if flag: return flag
+
+        return flag
+
+    def Search_Meta_Data_File_All(self, Node: iCloud_Drive_Node):
+
+        print(colored("\n[" + Node.Folder["name"] + "]", 'green'))
+
+        if Node.Parent == None: print(colored("◆ Parent Folder: None", 'green'))
+        else: print(colored("◆ Parent Folder: " + Node.Parent.Folder["name"], 'green'))
+        
+        print(colored("="*80, 'red'))
+
+        # Show Folder
+        for key, value in Node.Folder.items():
+                if key == "Parent": continue
+                print(colored(str(key) + " ▶ " + str(value), 'blue'))
+
+        print()
+        print(colored("[Files]", 'green'))
+        print("-"*80)
+
+        # Show File
+        for subFile in Node.File:
+            for key, value in subFile.items():
+                print(colored(str(key) + " ▶ " + str(value), 'blue'))
+
+            if subFile == Node.File[-1]: break
+            print("-"*80)
+            
+        print(colored("="*80, 'red'))
+
+        for subFolder in Node.Children:
+            self.Search_Meta_Data_File_All(subFolder)
 
     # UTC -> UTC+9
     def Time_Convert(self, UTC):
