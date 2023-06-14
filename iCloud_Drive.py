@@ -1,4 +1,4 @@
-import os
+import os, shutil
 import requests, json, urllib3
 from datetime import datetime, timedelta
 from termcolor import colored
@@ -26,9 +26,15 @@ def Forensic(Account_Session : dict):
         print("#    1. Start iCloud Drive Forensics (Live, Trash)                              #")
         print("#    2. Show Account Drive Tree                                                 #")
         print("#    3. Show Account Drive Meta Data                                            #")
-        print("#    4. Show Menu List Again                                                    #\n")
+        print("#    4. Export Drive Files                                                      #")        
+        print("#    5. Show Menu List Again                                                    #\n")
 
-        Number = int(input(colored("Select Drive Menu: ", 'yellow')))
+        while True:
+            Number = input(colored("Select Drive Menu: ", 'yellow'))
+            if Number.isdigit() and int(Number) in range(6):
+                Number = int(Number)
+                break
+            print(colored("[Invalid Number] Try Again!\n", 'red'))
 
         if Number == 0:
             os.system('cls')
@@ -43,56 +49,37 @@ def Forensic(Account_Session : dict):
             iCloud_Drive_Class.Drive_Trash_Request()
             print(colored(f"[Success] Trash Forensics", 'blue'))
 
+            iCloud_Drive_Class.isExplorer = True # 검사 완료
+
         elif Number == 2:
+            if not iCloud_Drive_Class.isExplorer:
+                os.system('cls')
+                print(colored("You haven't start [iCloud Drive Forensics] yet.", 'red'))
+                print(colored("Please start [iCloud Drive Forensics] First. (Option 1)", 'red'))
+                continue
+
             print(colored("\n[Show Account Drive Tree]", 'yellow'))
             iCloud_Drive_Class.Show_Drive_Tree()
 
         elif Number == 3:
+            if not iCloud_Drive_Class.isExplorer:
+                os.system('cls')
+                print(colored("You haven't start [iCloud Drive Forensics] yet.", 'red'))
+                print(colored("Please start [iCloud Drive Forensics] First. (Option 1)", 'red'))
+                continue
+
             print(colored("\n[Show Account Drive Meta Data]", 'yellow'))
             iCloud_Drive_Class.Show_Drive_Meta()
-            continue
-        
+
         elif Number == 4:
-            os.system('cls')
-            continue
+            if not iCloud_Drive_Class.isExplorer:
+                os.system('cls')
+                print(colored("You haven't start [iCloud Drive Forensics] yet.", 'red'))
+                print(colored("Please start [iCloud Drive Forensics] First. (Option 1)", 'red'))
+                continue
 
-        else:
-            print("[Invalid Number] Try Again!")
-
-
-
-
-
-
-
-    # cookies = Account_Session["AccountSessions"] # dict
-    # requestURL = "https://p125-drivews.icloud.com/retrieveItemDetailsInFolders"
-    # requestURL = "https://p125-drivews.icloud.com/retrieveItemDetails"
-
-    # header = {
-    #     'Content-Type': 'application/json',
-    #     'Referer': 'https://www.icloud.com/',
-    #     'Accept': '*/*',
-    #     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/603.3.1 (KHTML, like Gecko) Version/10.1.2 Safari/603.3.1',
-    #     'Origin': 'https://www.icloud.com',
-    # }
-
-    # data = [{
-    #     "drivewsid":"FOLDER::com.apple.CloudDocs::root",
-    #     "partialData":"false",
-    #     "includeHierarchy":"true"
-    # }]
-
-    # data = {
-    #     "items" : [{"drivewsid" : "FILE::com.apple.CloudDocs::125B4B6C-B330-40A6-852E-F283CD4249F6"}]
-    # }
-
-    # postData = json.dumps(data)
-    # response = requests.post(
-    #     url=requestURL, headers=header, data=postData, cookies=cookies, proxies=proxies, verify=False)
-    # responseJson = json.loads(response.text)
-    # print(responseJson)
-
+            print(colored("\n[Export Drive Files]", 'yellow'))
+            iCloud_Drive_Class.Export_Drive_Files()
 
 class iCloud_Drive_Node:
     def __init__(self):
@@ -108,8 +95,9 @@ class iCloud_Account_Drive:
     # Create "iCloud Drive" Directory to current path
     def __init__(self, Account_Session : dict):
         self.cookies = Account_Session["AccountSessions"] # dict
-
+        self.isExplorer = False # 검사 여부
         self.initDirPath = ".\iCloud Drive"
+
         if not os.path.exists(self.initDirPath):
             os.makedirs(self.initDirPath)
 
@@ -118,6 +106,15 @@ class iCloud_Account_Drive:
         for category in ["Live", "Trash"]:
             # Define iCloud Node Class
             self.DriveJson[category] = iCloud_Drive_Node()
+
+            # iCloud Drive\Live, iCloud Drive\Trash 폴더 만들기 + Reset
+            subPATH = os.path.join(self.initDirPath, category)
+
+            if not os.path.exists(subPATH):
+                os.makedirs(subPATH)
+            else:
+                shutil.rmtree(subPATH); os.makedirs(subPATH)
+
 
     # Get Drive Live Meta Data    
     def Drive_Live_Request(self):
@@ -287,7 +284,12 @@ class iCloud_Account_Drive:
             print("#    2. Show Trash Tree                      #")
             print("#    3. Show Menu List Again                 #\n")
 
-            Number = int(input(colored("Select Show Drive Tree Menu: ", 'yellow')))
+            while True:
+                Number = input(colored("Select Drive Menu: ", 'yellow'))
+                if Number.isdigit() and int(Number) in range(4):
+                    Number = int(Number)
+                    break
+                print(colored("[Invalid Number] Try Again!\n", 'red'))
 
             if Number == 0:
                 break
@@ -299,9 +301,6 @@ class iCloud_Account_Drive:
             elif Number == 3:
                 os.system('cls')
                 continue
-
-            else:
-                print("[Invalid Number] Try Again!")
 
 
     def Show_Drive_Meta_Data_Structure(self, Node : iCloud_Drive_Node, count=0):
@@ -338,7 +337,12 @@ class iCloud_Account_Drive:
             print("#    4. Search All Meta Data                     #")
             print("#    5. Show Menu List Again                     #\n")
 
-            Number = int(input(colored("Select Show Meta Data Menu: ", 'yellow')))
+            while True:
+                Number = input(colored("Select Drive Menu: ", 'yellow'))
+                if Number.isdigit() and int(Number) in range(6):
+                    Number = int(Number)
+                    break
+                print(colored("[Invalid Number] Try Again!\n", 'red'))
 
             if Number == 0:
                 os.system('cls')
@@ -348,21 +352,29 @@ class iCloud_Account_Drive:
                 print(colored(f"\n[Search Live Folder Meta Data]", 'blue'))
                 data = input(colored("Input Live Folder Name or ID(docwid): ", 'yellow'))
 
-                if not self.Search_Meta_Data_Folder(self.DriveJson["Live"], data):
+                self.MetaFlag = False
+                self.Search_Meta_Data_Folder(self.DriveJson["Live"], data)
+                
+                if not self.MetaFlag:
                     print(colored("Invalid Name or ID(docwid)\n", 'red'))
 
             elif Number == 2:
                 print(colored(f"\n[Search Live File Meta Data]", 'blue'))
                 data = input(colored("Input Live File Name(No extension) or ID(docwid): ", 'yellow'))
 
-                if not self.Search_Meta_Data_File(self.DriveJson["Live"], data):
+                self.MetaFlag = False
+                self.Search_Meta_Data_File(self.DriveJson["Live"], data)
+                if not self.MetaFlag:
                     print(colored("Invalid Name(No extension) or ID(docwid)\n", 'red'))
 
             elif Number == 3:
                 print(colored(f"\n[Search Trash File Meta Data]", 'blue'))
                 data = input(colored("Input Trash File Name(No extension) or ID(docwid): ", 'yellow'))
 
-                if not self.Search_Meta_Data_File(self.DriveJson["Trash"], data):
+                self.MetaFlag = False
+                self.Search_Meta_Data_File(self.DriveJson["Trash"], data)
+
+                if not self.MetaFlag:
                     print(colored("Invalid Name(No extension) or ID(docwid)\n", 'red'))
 
             elif Number == 4:
@@ -373,46 +385,38 @@ class iCloud_Account_Drive:
                 self.Search_Meta_Data_File_All(self.DriveJson["Trash"])
                 print()
 
-            else:
-                print("[Invalid Number] Try Again!")
+            elif Number == 5:
+                os.system('cls')
+                continue
 
     # Node : Live Data or Trash Data, data : Input Name or ID(docwid)
     def Search_Meta_Data_Folder(self, Node: iCloud_Drive_Node, data: str):
-        flag = False
-
         if Node.Folder["name"] == data or Node.Folder["docwsid"] == data:
             print("-" * 80)
             for key, value in Node.Folder.items():
                 if key == "Parent": continue
                 print(colored(str(key) + " ▶ " + str(value), 'blue'))
             print("-" * 80 + '\n')
-            return True # Success
-        
+
+            self.MetaFlag = True
+
         else:
             for subFolder in Node.Children:
-                flag = self.Search_Meta_Data_Folder(subFolder, data)
-                if flag: return flag
-
-        return flag
+                self.Search_Meta_Data_Folder(subFolder, data)
     
     # Node : Live Data or Trash Data, data : Input Name or ID(docwid) 
-    def Search_Meta_Data_File(self, Node: iCloud_Drive_Node, data: str):
-        print()
-        flag = False
-    
+    def Search_Meta_Data_File(self, Node: iCloud_Drive_Node, data: str):    
         for subFile in Node.File:
             if subFile["name"] == data or subFile["docwsid"] == data:
                 print("-" * 80)
                 for key, value in subFile.items():
                     print(colored(str(key) + " ▶ " + str(value), 'blue'))
                 print("-" * 80 + '\n')
-                return True # Success
+
+                self.MetaFlag = True
             
         for subFolder in Node.Children:
-            flag = self.Search_Meta_Data_File(subFolder, data)
-            if flag: return flag
-
-        return flag
+            self.Search_Meta_Data_File(subFolder, data)
 
     def Search_Meta_Data_File_All(self, Node: iCloud_Drive_Node):
 
@@ -444,6 +448,168 @@ class iCloud_Account_Drive:
 
         for subFolder in Node.Children:
             self.Search_Meta_Data_File_All(subFolder)
+
+
+    def Export_Drive_Files(self):
+        print()
+
+        while True:
+            print("#    0. EXIT (Move to Drive Category)                                #")
+            print("#    1. [Live] Export with Name(No extension) or ID(docwid)          #")
+            print("#    2. [Live] Export All Files                                      #")
+            print("#    3. [Trash] Export with Name(No extension) or ID(docwid)         #")
+            print("#    4. [Trash] Export All Files                                     #")
+            print("#    5. Show Menu List Again                                         #\n")
+
+            while True:
+                Number = input(colored("Select Drive Menu: ", 'yellow'))
+                if Number.isdigit() and int(Number) in range(6):
+                    Number = int(Number)
+                    break
+                print(colored("[Invalid Number] Try Again!\n", 'red'))
+
+            if Number == 0:
+                os.system('cls')
+                break
+
+            elif Number == 1:
+                print(colored(f"\n[Live File Export]", 'blue'))
+                data = input(colored("Input Live File Name(No extension) or ID(docwid): ", 'yellow'))
+                
+                # ./iCloud Drive/Live
+                self.DriveExportPATH = os.path.join(self.initDirPath, "Live")
+                self.ExportFlag = False # 탐지용 플래그 초기화
+                self.File_Export(self.DriveJson["Live"], data)
+                
+                if not self.ExportFlag:
+                    print(colored("Invalid Name(No extension) or ID(docwid)\n", 'red'))
+
+            elif Number == 2:
+                print(colored(f"\n[Live All File Export]", 'blue'))
+
+                # ./iCloud Drive/Live
+                self.DriveExportPATH = os.path.join(self.initDirPath, "Live")
+                self.ExportCount = 0
+                self.File_Export_All(self.DriveJson["Live"])
+                print(colored(f"\n[Complete Export All Live Data]\n", 'yellow'))
+
+            elif Number == 3:
+                print(colored(f"\n[Trash File Export]", 'blue'))
+                data = input(colored("Input Live File Name(No extension) or ID(docwid): ", 'yellow'))
+
+                # ./iCloud Drive/Live
+                self.DriveExportPATH = os.path.join(self.initDirPath, "Trash")
+                self.ExportFlag = False # 탐지용 플래그 초기화
+                self.File_Export(self.DriveJson["Trash"], data)
+                
+                if not self.ExportFlag:
+                    print(colored("Invalid Name(No extension) or ID(docwid)\n", 'red'))
+
+            elif Number == 4:
+                print(colored(f"\n[Trash All File Export]", 'blue'))
+
+                # ./iCloud Drive/Live
+                self.DriveExportPATH = os.path.join(self.initDirPath, "Trash")
+                self.ExportCount = 0
+                self.File_Export_All(self.DriveJson["Trash"])
+                print(colored(f"\n[Complete Export All Trash Data]\n", 'yellow'))
+
+            elif Number == 5:
+                os.system('cls')
+                continue
+
+
+    def File_Export(self, Node: iCloud_Drive_Node, data):
+
+        Target = list(filter(lambda x: x["name"] == data or x["docwsid"] == data, Node.File))
+
+        if Target != []:
+
+            Download_Json = self.Get_Drive_Download_Token(Target[0]["docwsid"])
+            Download_Url = Download_Json["data_token"]["url"]
+
+            header = {
+                'Accept': '*/*',
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/603.3.1 (KHTML, like Gecko) Version/10.1.2 Safari/603.3.1',
+            }
+
+            response = requests.get(
+                url=Download_Url, headers=header, proxies=proxies, verify=False)
+            
+            TargetName = Target[0]["name"] + "(" + Target[0]["docwsid"] + ")" + '.' + Target[0]["extension"]
+            filePATH = os.path.join(self.DriveExportPATH, TargetName)
+
+            with open(filePATH, "wb") as f:
+                f.write(response.content)
+
+            self.ExportFlag = True
+
+            print(colored("\n[Success Export]", 'green'))
+            print(colored("▶ " + TargetName, 'blue'))
+            print(colored("▶ Export Time: " + datetime.now().strftime('%Y-%m-%dT%H:%M:%S+09:00'), 'blue'))
+            print(colored("▶ Path: " + filePATH, 'blue'))
+            print("-" * 80 + '\n')
+        
+        for subFolder in Node.Children:
+            self.File_Export(subFolder, data)
+
+    def Get_Drive_Download_Token(self, docwsid: str) -> dict:
+        requestURL = "https://p125-docws.icloud.com/ws/com.apple.CloudDocs/download/batch"
+
+        header = {
+            'Content-Type': 'application/json',
+            'Referer': 'https://www.icloud.com/',
+            'Accept': '*/*',
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/603.3.1 (KHTML, like Gecko) Version/10.1.2 Safari/603.3.1',
+            'Origin': 'https://www.icloud.com',
+        }
+
+        data = {
+            "document_id" : docwsid
+        }
+
+        postData = json.dumps(data)
+        response = requests.post(
+            url=requestURL, headers=header, data=postData, cookies=self.cookies, proxies=proxies, verify=False)
+        
+        return json.loads(response.text)[0]
+
+
+    def File_Export_All(self, Node: iCloud_Drive_Node):
+
+        for subFile in Node.File:
+            Download_Json = self.Get_Drive_Download_Token(subFile["docwsid"])
+
+            if Download_Json.get("data_token") == None:
+                continue
+
+            Download_Url = Download_Json["data_token"]["url"]
+
+            header = {
+                'Accept': '*/*',
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/603.3.1 (KHTML, like Gecko) Version/10.1.2 Safari/603.3.1',
+            }
+
+            response = requests.get(
+                url=Download_Url, headers=header, proxies=proxies, verify=False)
+            
+            TargetName = subFile["name"] + "(" + subFile["docwsid"] + ")" + '.' + subFile["extension"]
+            filePATH = os.path.join(self.DriveExportPATH, TargetName)
+
+            with open(filePATH, "wb") as f:
+                f.write(response.content)
+
+            self.ExportCount += 1
+
+            print(colored(f"\n[Success Export (Count: {self.ExportCount})]", 'blue'))
+            print(colored("▶ " + TargetName, 'blue'))
+            print(colored("▶ Export Time: " + datetime.now().strftime('%Y-%m-%dT%H:%M:%S+09:00'), 'blue'))
+            print(colored("▶ Path: " + filePATH, 'blue'))
+            print("-" * 80)
+        
+        for subFolder in Node.Children:
+            self.File_Export_All(subFolder)
+
 
     # UTC -> UTC+9
     def Time_Convert(self, UTC):

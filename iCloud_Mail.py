@@ -39,7 +39,12 @@ def Forensic(Account_Session : dict):
         print("#    5. Export Attachment Mail Data                                             #")
         print("#    6. Show Menu List Again                                                    #\n")
 
-        Number = int(input(colored("Select Mail Menu: ", 'yellow')))
+        while True:
+                Number = input(colored("Select Drive Menu: ", 'yellow'))
+                if Number.isdigit() and int(Number) in range(7):
+                    Number = int(Number)
+                    break
+                print(colored("[Invalid Number] Try Again!\n", 'red'))
 
         if Number == 0:
             os.system('cls')
@@ -74,10 +79,6 @@ def Forensic(Account_Session : dict):
         elif Number == 6:
             os.system('cls')
             continue
-
-        else:
-            print("[Invalid Number] Try Again!")
-
 
 # iCloud Mail Class
 class iCloud_Account_Mail:
@@ -198,7 +199,12 @@ class iCloud_Account_Mail:
             print("#    3. Show Deleted Messages                #")
             print("#    4. Show Menu List Again                 #\n")
 
-            Number = int(input(colored("Select Show Mail Menu: ", 'yellow')))
+            while True:
+                Number = input(colored("Select Drive Menu: ", 'yellow'))
+                if Number.isdigit() and int(Number) in range(5):
+                    Number = int(Number)
+                    break
+                print(colored("[Invalid Number] Try Again!\n", 'red'))
 
             if Number == 0:
                 os.system('cls')
@@ -219,10 +225,6 @@ class iCloud_Account_Mail:
             elif Number == 4:
                 os.system('cls')
                 continue
-
-            else:
-                print("[Invalid Number] Try Again!")
-
 
     def Save_Mail_Data(self):
 

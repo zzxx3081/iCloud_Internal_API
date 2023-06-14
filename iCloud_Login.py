@@ -56,13 +56,14 @@ def Authentication_NewToken() -> dict:
 
         if Answer.lower() == 'y':
             print(colored("\nSubmit the Output Path to save the Session Data.", 'green'))
-            iCloud_Session_Path = dequote(
-                input(colored("iCloud Session Path: ", 'yellow')))
 
-            while not os.path.exists(iCloud_Session_Path):
-                print(colored("\n[Invalid Path] Try Again!\n", 'yellow'))
-                iCloud_Session_Path = dequote(input(
-                    colored("iCloud Session Path: ", 'yellow')))
+            while True:
+                iCloud_Session_Path = dequote(input(colored("iCloud Session Path: ", 'yellow')))
+                
+                if iCloud_Session_Path != None and os.path.exists(iCloud_Session_Path):
+                    break
+                
+                print(colored("\n[Invalid Path] Try Again!\n", 'red'))
 
             iCloud_Login_Class.saveSession(iCloud_Session_Path)
             break
@@ -82,14 +83,16 @@ def Authentication_FileToken() -> dict:
 
     print("To acquire a old Session Informaion from Local Session File, You need to input the Session File Path.\n")
     print(colored("Submit the Full Path about Local Session File (Format : Json).", 'green'))
-    Local_Session_Path = dequote(
-        input(colored("Local Session File Path: ", 'yellow')))
-
-    while not os.path.exists(Local_Session_Path):
-        print(colored("\n[Invalid Path] Try Again!\n", 'yellow'))
+    
+    while True:
         Local_Session_Path = dequote(input(
             colored("Local Session File Path: ", 'yellow')))
-
+        
+        if Local_Session_Path != None and os.path.exists(Local_Session_Path):
+            break
+        
+        print(colored("\n[Invalid Path] Try Again!\n", 'red'))
+        
     iCloud_Session_Class = Session()
 
     return iCloud_Session_Class.readSession(Local_Session_Path)
@@ -143,9 +146,13 @@ def input_iCloud_Credential():
 
 # Remove input "\'" or "\""  (ex: 'path' -> path)
 def dequote(s):
-    if (s[0] == s[-1]) and s.startswith(("'", '"')):
-        return s[1:-1]
-    return s
+    try:
+        if (s[0] == s[-1]) and s.startswith(("'", '"')):
+            return s[1:-1]
+        return s
+    
+    except IndexError:
+        return None
 
 
 # iCloud Auth Class <- Inheritance iCloud_Session Class

@@ -43,7 +43,12 @@ def Get_iCloud_Authentication_Session():
         print("#    2. Login Based Session Authentication       #")
         print("#    3. Show Menu List Again                     #\n")
 
-        Number = int(input(colored("Select Authentication Menu: ", 'yellow')))
+        while True:
+                Number = input(colored("Select Drive Menu: ", 'yellow'))
+                if Number.isdigit() and int(Number) in range(4):
+                    Number = int(Number)
+                    break
+                print(colored("[Invalid Number] Try Again!\n", 'red'))
 
         if Number == 0:
             os.system('cls')
@@ -61,9 +66,6 @@ def Get_iCloud_Authentication_Session():
         elif Number == 3:
             os.system('cls')
             continue
-        else:
-            os.system('cls')
-            print("[Invalid Number] Try Again!")
 
 # iCloud Explorer menu
 
@@ -82,7 +84,12 @@ def iCloud_Explorer(Account_Session: dict):  # Require Session Json
         print("#    2. iCloud Mail                                      #")
         print("#    3. Show Menu List Again                             #\n")
 
-        Number = int(input(colored("Select Explorer Menu: ", 'yellow')))
+        while True:
+                Number = input(colored("Select Drive Menu: ", 'yellow'))
+                if Number.isdigit() and int(Number) in range(4):
+                    Number = int(Number)
+                    break
+                print(colored("[Invalid Number] Try Again!\n", 'red'))
 
         if Number == 0:
             print(colored("\n[Move to iCloud Authentication]", 'yellow'))
@@ -100,18 +107,12 @@ def iCloud_Explorer(Account_Session: dict):  # Require Session Json
             os.system('cls')
             continue
 
-        else:
-            print("[Invalid Number] Try Again!")
-
-
 # main
 if __name__ == "__main__":
-
     # Get User Account Session
     Account_Session = Get_iCloud_Authentication_Session()
 
     # iCloud Explorer Menu
     iCloud_Explorer(Account_Session)
 
-    # iCloud_Drive.Forensic(Account_Session)
     
