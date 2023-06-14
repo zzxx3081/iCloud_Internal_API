@@ -55,7 +55,7 @@ def Forensic(Account_Session : dict):
             os.system('cls')
             print(colored("\n[iCloud Mail Forensics]", 'yellow'))
             iCloud_Mail_Class.Mail_Request()
-            
+
             iCloud_Mail_Class.isExplorer = True # 검사 완료
 
         elif Number == 2:
@@ -205,7 +205,8 @@ class iCloud_Account_Mail:
                 print(colored(f"[Success] {category} Forensics", 'blue'))
 
             except requests.exceptions.RequestException as e:
-                print(f"[Fail] {category} Request", e)
+                print(colored(f"[Fail] {category} Request" + str(e), 'red'))
+                exit(0)
 
     def Show_Mail_Data(self):
 

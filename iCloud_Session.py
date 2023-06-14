@@ -30,4 +30,5 @@ class Session:
             print(colored(f"\n[Success] Read the Session File : {filePath}" + "\n", 'blue'))
             return self.SessionJson
         except Exception as e:
-            print("[Fail] Invalid Session path", e)
+            print(colored("[Fail] Invalid Session path" + str(e), 'red'))
+            exit(0)

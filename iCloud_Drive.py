@@ -42,6 +42,7 @@ def Forensic(Account_Session : dict):
             break
 
         elif Number == 1:
+            os.system('cls')
             print(colored("\n[iCloud Drive Forensics]", 'yellow'))
 
             iCloud_Drive_Class.Drive_Live_Request()
@@ -80,6 +81,10 @@ def Forensic(Account_Session : dict):
 
             print(colored("\n[Export Drive Files]", 'yellow'))
             iCloud_Drive_Class.Export_Drive_Files()
+        
+        elif Number == 5:
+            os.system('cls')
+            continue
 
 class iCloud_Drive_Node:
     def __init__(self):
@@ -214,7 +219,8 @@ class iCloud_Account_Drive:
 
 
         except requests.exceptions.RequestException as e:
-            print("[Fail] Drive Live Request", e)
+            print(colored("[Fail] Drive Live Request" + str(e), 'red'))
+            exit(0)
 
     # Trash Folder 탐색
     def Drive_Trash_Folder(self, Node: iCloud_Drive_Node, drivewsid: str): # drivewsid: TRASH_ROOT
@@ -271,7 +277,8 @@ class iCloud_Account_Drive:
                 Node.File.append(subFile)
 
         except requests.exceptions.RequestException as e:
-            print("[Fail] Drive Trash Request", e)
+            print(colored("[Fail] Drive Trash Request" + str(e), 'red'))
+            exit(0)
 
     # Show iCloud Drive Tree
     def Show_Drive_Tree(self):
@@ -350,7 +357,7 @@ class iCloud_Account_Drive:
             
             elif Number == 1:
                 print(colored(f"\n[Search Live Folder Meta Data]", 'blue'))
-                data = input(colored("Input Live Folder Name or ID(docwid): ", 'yellow'))
+                data = input(colored("Input Live Folder Name(No extension) or ID(docwid): ", 'yellow'))
 
                 self.MetaFlag = False
                 self.Search_Meta_Data_Folder(self.DriveJson["Live"], data)

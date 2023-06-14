@@ -225,7 +225,8 @@ class iCloud_Account_Session(Session):
                 self.AccountLogin_Request()  # Get WEB AUTH, PCS cookies
 
         except requests.exceptions.RequestException as e:
-            print("[Fail] First Auth Signin Request", e)
+            print(colored("[Fail] First Auth Signin Request" + str(e), 'red'))
+            exit(0)
 
     # Second Auth Securitycode Request
 
@@ -257,7 +258,8 @@ class iCloud_Account_Session(Session):
             self.SessionJson['AccountHeaders']['X-Apple-Session-Token'] = response.headers['X-Apple-Session-Token']
 
         except requests.exceptions.RequestException as e:
-            print("[Fail] Second Auth Securitycode Reqeust", e)
+            print(colored("[Fail] Second Auth Securitycode Reqeust" + str(e), 'red'))
+            exit(0)
 
     # Get TrustToken
 
@@ -281,7 +283,8 @@ class iCloud_Account_Session(Session):
             self.SessionJson['AccountHeaders']['X-Apple-TwoSV-Trust-Token'] = response.headers['X-Apple-TwoSV-Trust-Token']
 
         except requests.exceptions.RequestException as e:
-            print("[Fail] TrustToken Reqeust", e)
+            print(colored("[Fail] TrustToken Reqeust" + str(e), 'red'))
+            exit(0)
 
     # Get the Auth cookis about PCS and WEB AUTH (AccountLogin Request)
 
@@ -321,4 +324,5 @@ class iCloud_Account_Session(Session):
             self.SessionJson['AccountInfo']['Time Zone'] = responseJson['requestInfo']['timeZone']
 
         except requests.exceptions.RequestException as e:
-            print("[Fail] AccountLogin Reqeust", e)
+            print(colored("[Fail] AccountLogin Reqeust" + str(e), 'red'))
+            exit(0)
