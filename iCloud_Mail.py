@@ -55,24 +55,46 @@ def Forensic(Account_Session : dict):
             os.system('cls')
             print(colored("\n[iCloud Mail Forensics]", 'yellow'))
             iCloud_Mail_Class.Mail_Request()
+            
+            iCloud_Mail_Class.isExplorer = True # 검사 완료
 
         elif Number == 2:
-            os.system('cls')
+            if not iCloud_Mail_Class.isExplorer:
+                os.system('cls')
+                print(colored("You haven't start [iCloud Mail Forensics] yet.", 'red'))
+                print(colored("Please start [iCloud Mail Forensics] First. (Option 1)", 'red'))
+                continue
+
             print(colored("\n[Show Account Mail Data]", 'yellow'))
-            iCloud_Mail_Class.Show_Mail_Data()
+            iCloud_Mail_Class.Show_Mail_Data() 
         
         elif Number == 3:
-            os.system('cls')
+            if not iCloud_Mail_Class.isExplorer:
+                os.system('cls')
+                print(colored("You haven't start [iCloud Mail Forensics] yet.", 'red'))
+                print(colored("Please start [iCloud Mail Forensics] First. (Option 1)", 'red'))
+                continue
+
             print(colored("\n[Export Account Mail Data]", 'yellow'))
             iCloud_Mail_Class.Save_Mail_Data()
 
         elif Number == 4:
-            os.system('cls')
+            if not iCloud_Mail_Class.isExplorer:
+                os.system('cls')
+                print(colored("You haven't start [iCloud Mail Forensics] yet.", 'red'))
+                print(colored("Please start [iCloud Mail Forensics] First. (Option 1)", 'red'))
+                continue
+
             print(colored("\n[Export Contents Mail Data]", 'yellow'))
             iCloud_Mail_Class.Save_Mail_Contents_Data()            
 
         elif Number == 5:
-            os.system('cls')
+            if not iCloud_Mail_Class.isExplorer:
+                os.system('cls')
+                print(colored("You haven't start [iCloud Mail Forensics] yet.", 'red'))
+                print(colored("Please start [iCloud Mail Forensics] First. (Option 1)", 'red'))
+                continue
+
             print(colored("\n[Export Attachment Mail Data]", 'yellow'))
             iCloud_Mail_Class.Save_Mail_Attachment_Data()
 
@@ -86,6 +108,7 @@ class iCloud_Account_Mail:
     # Create "iCloud Mail" Directory to current path
     def __init__(self, Account_Session : dict):
         self.cookies = Account_Session["AccountSessions"] # dict
+        self.isExplorer = False # 검사 여부
 
         self.initDirPath = ".\iCloud Mail"
         if not os.path.exists(self.initDirPath):
