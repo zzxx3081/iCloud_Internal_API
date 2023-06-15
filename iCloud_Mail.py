@@ -9,8 +9,8 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Fiddler Local proxy
 proxies = {
-    # 'http': 'http://127.0.0.1:8888',
-    # 'https': 'http://127.0.0.1:8888'
+    'http': 'http://127.0.0.1:8888',
+    'https': 'http://127.0.0.1:8888'
 }
 
 # Start iCloud Mail Forensics
@@ -34,14 +34,15 @@ def Forensic(Account_Session : dict):
         print("#    0. EXIT (Move to Main Category)                                            #")
         print("#    1. Start iCloud Mail Forensics (INBOX, Sent Messages, Deleted Messages)    #")
         print("#    2. Show Account Mail Data                                                  #")
-        print("#    3. Export Account Mail Data (Format: DataBase)                             #")
-        print("#    4. Export Contents Mail Data                                               #")
-        print("#    5. Export Attachment Mail Data                                             #")
-        print("#    6. Show Menu List Again                                                    #\n")
+        print("#    3. Export Preview Mail Data (Format: DataBase)                             #")
+        print("#    4. Export MIME Mail Data (Format: eml)                                     #")
+        print("#    5. Export Contents Mail Data (Format: HTML)                                #")
+        print("#    6. Export Attachment Mail Data                                             #")
+        print("#    7. Show Menu List Again                                                    #\n")
 
         while True:
                 Number = input(colored("Select Drive Menu: ", 'yellow'))
-                if Number.isdigit() and int(Number) in range(7):
+                if Number.isdigit() and int(Number) in range(8):
                     Number = int(Number)
                     break
                 print(colored("[Invalid Number] Try Again!\n", 'red'))
@@ -75,10 +76,20 @@ def Forensic(Account_Session : dict):
                 print(colored("Please start [iCloud Mail Forensics] First. (Option 1)", 'red'))
                 continue
 
-            print(colored("\n[Export Account Mail Data]", 'yellow'))
-            iCloud_Mail_Class.Save_Mail_Data()
+            print(colored("\n[Export Preview Mail Data]", 'yellow'))
+            iCloud_Mail_Class.Save_Mail_Preview_Data()
 
         elif Number == 4:
+            if not iCloud_Mail_Class.isExplorer:
+                os.system('cls')
+                print(colored("You haven't start [iCloud Mail Forensics] yet.", 'red'))
+                print(colored("Please start [iCloud Mail Forensics] First. (Option 1)", 'red'))
+                continue
+
+            print(colored("\n[Export MIME Mail Data]", 'yellow'))
+            iCloud_Mail_Class.Save_Mail_MIME_Data()
+
+        elif Number == 5:
             if not iCloud_Mail_Class.isExplorer:
                 os.system('cls')
                 print(colored("You haven't start [iCloud Mail Forensics] yet.", 'red'))
@@ -88,7 +99,7 @@ def Forensic(Account_Session : dict):
             print(colored("\n[Export Contents Mail Data]", 'yellow'))
             iCloud_Mail_Class.Save_Mail_Contents_Data()            
 
-        elif Number == 5:
+        elif Number == 6:
             if not iCloud_Mail_Class.isExplorer:
                 os.system('cls')
                 print(colored("You haven't start [iCloud Mail Forensics] yet.", 'red'))
@@ -98,7 +109,7 @@ def Forensic(Account_Session : dict):
             print(colored("\n[Export Attachment Mail Data]", 'yellow'))
             iCloud_Mail_Class.Save_Mail_Attachment_Data()
 
-        elif Number == 6:
+        elif Number == 7:
             os.system('cls')
             continue
 
@@ -118,6 +129,7 @@ class iCloud_Account_Mail:
         for category in ["INBOX", "Sent_Messages", "Deleted_Messages"]:
             self.MailJson[category] = []
 
+    # Number 1
     def Mail_Request(self):
         # Start Request
          for category in ["INBOX", "Sent_Messages", "Deleted_Messages"]:
@@ -208,12 +220,8 @@ class iCloud_Account_Mail:
                 print(colored(f"[Fail] {category} Request" + str(e), 'red'))
                 exit(0)
 
+    # Number 2
     def Show_Mail_Data(self):
-
-        if (self.MailJson["INBOX"], self.MailJson["Sent_Messages"], self.MailJson["Deleted_Messages"]) == ([], [], []):
-            print("[Empty Mailbox] Check whether you perform \"Start iCloud Mail Forensics (INBOX, Sent Messages, Deleted Messages)\" menu.\n")
-            return
-
         category = {1:"INBOX", 2:"Sent_Messages", 3:"Deleted_Messages"}
 
         while True:
@@ -245,17 +253,12 @@ class iCloud_Account_Mail:
                         print('●', key+':', value)
                     print("\n" + "-" * 85 +"\n")
 
-
             elif Number == 4:
                 os.system('cls')
                 continue
-
-    def Save_Mail_Data(self):
-
-        if (self.MailJson["INBOX"], self.MailJson["Sent_Messages"], self.MailJson["Deleted_Messages"]) == ([], [], []):
-            print("[Empty Mailbox] Check whether you perform \"Start iCloud Mail Forensics (INBOX, Sent Messages, Deleted Messages)\" menu.\n")
-            return
-
+    
+    # Number 3
+    def Save_Mail_Preview_Data(self):
         # Init DB File
         DBName = "iCloud_Mail.db"
         PATH = os.path.join(self.initDirPath, DBName)
@@ -312,13 +315,102 @@ class iCloud_Account_Mail:
         print(colored(f"[Success] Export the iCloud Mail DataBase File : {PATH}" + "\n", 'blue'))
         connect.close()
 
+    # Number 4
+    def Save_Mail_MIME_Data(self):
+        PATH = os.path.join(self.initDirPath, ".\iCloud Mail MIME")
+
+        if not os.path.exists(PATH):
+            os.makedirs(PATH)
+        else:
+            shutil.rmtree(PATH); os.makedirs(PATH)
+        
+        # Make MIME sub Directory
+        for category in ["INBOX", "Sent_Messages", "Deleted_Messages"]:
+            print(colored(f"[Start] Export {category} MIME", 'blue'))
+
+            subPATH = os.path.join(PATH, category)
+            if not os.path.exists(subPATH):
+                os.makedirs(subPATH)
+            else:
+                shutil.rmtree(subPATH); os.makedirs(subPATH)
+
+            for mail in self.MailJson[category]:
+                
+                Title = mail["Title"]
+                guid = mail["guid"]
+
+                requestURL = f"https://p31-mailws.icloud.com/wm/message/{Title}.eml?guid={guid}"
+
+                header = {
+                    'Content-Type': 'application/json',
+                    'Referer': 'https://www.icloud.com/',
+                    'Accept': '*/*',
+                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/603.3.1 (KHTML, like Gecko) Version/10.1.2 Safari/603.3.1',
+                    'Origin': 'https://www.icloud.com',
+                }
+
+                response = requests.get(url=requestURL, headers=header, cookies=self.cookies, proxies=proxies, verify=False)
+
+                filePATH = os.path.join(subPATH, mail["Title"] + ".eml")
+
+                with open(filePATH, 'wb') as f:
+                    f.write(response.content)
+
+    # Number 5
+    def Save_Mail_Contents_Data(self):
+        PATH = os.path.join(self.initDirPath, ".\iCloud Mail Contents")
+
+        if not os.path.exists(PATH):
+            os.makedirs(PATH)
+        else:
+            shutil.rmtree(PATH); os.makedirs(PATH)
+
+        # Make Contents sub Directory
+        for category in ["INBOX", "Sent_Messages", "Deleted_Messages"]:
+            print(colored(f"[Start] Export {category} Contents", 'blue'))
+
+            subPATH = os.path.join(PATH, category)
+            if not os.path.exists(subPATH):
+                os.makedirs(subPATH)
+            else:
+                shutil.rmtree(subPATH); os.makedirs(subPATH)
+
+            for mail in self.MailJson[category]:
+                requestURL = "https://p31-mailws.icloud.com/wm/message"
+
+                header = {
+                    'Content-Type': 'application/json',
+                    'Referer': 'https://www.icloud.com/',
+                    'Accept': '*/*',
+                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/603.3.1 (KHTML, like Gecko) Version/10.1.2 Safari/603.3.1',
+                    'Origin': 'https://www.icloud.com',
+                }
+
+                data = {
+                    "jsonrpc": "2.0",
+                    "id": str(int(mktime(datetime.now().timetuple())*1000)) + "/1",
+                    "method": "get",
+                    "params": {
+                        "guid": mail["guid"],
+                        "parts": [
+                            mail["parts"][0]["pguid"]
+                        ]
+                    },
+                    "dontMarkAsRead": "true"
+                }
+
+                postData = json.dumps(data)
+                response = requests.post(url=requestURL, headers=header, data=postData, cookies=self.cookies, proxies=proxies, verify=False)
+
+                mailContent = response.json()["result"][0]["parts"][0]["content"]
+
+                filePATH = os.path.join(subPATH, mail["Title"] + ".HTML")
+
+                with open(filePATH, 'w', encoding='utf-8') as f:
+                    f.write(mailContent)
+
+    # Number 6
     def Save_Mail_Attachment_Data(self):
-
-        if (self.MailJson["INBOX"], self.MailJson["Sent_Messages"], self.MailJson["Deleted_Messages"]) == ([], [], []):
-            print("[Empty Mailbox] Check whether you perform \"Start iCloud Mail Forensics (INBOX, Sent Messages, Deleted Messages)\" menu.\n")
-            return
-
-
         PATH = os.path.join(self.initDirPath, ".\iCloud Mail Attachment")
         if not os.path.exists(PATH):
             os.makedirs(PATH)
@@ -354,66 +446,6 @@ class iCloud_Account_Mail:
 
                         with open(filePATH, 'wb') as f:
                             f.write(response.content)
-
-
-    def Save_Mail_Contents_Data(self):
-
-
-        if (self.MailJson["INBOX"], self.MailJson["Sent_Messages"], self.MailJson["Deleted_Messages"]) == ([], [], []):
-            print("[Empty Mailbox] Check whether you perform \"Start iCloud Mail Forensics (INBOX, Sent Messages, Deleted Messages)\" menu.\n")
-            return
-
-        PATH = os.path.join(self.initDirPath, ".\iCloud Mail Contents")
-
-        if not os.path.exists(PATH):
-            os.makedirs(PATH)
-        else:
-            shutil.rmtree(PATH); os.makedirs(PATH)
-
-        # Make Attachment sub Directory
-        for category in ["INBOX", "Sent_Messages", "Deleted_Messages"]:
-            print(colored(f"[Start] Export {category} Contents", 'blue'))
-
-            subPATH = os.path.join(PATH, category)
-            if not os.path.exists(subPATH):
-                os.makedirs(subPATH)
-            else:
-                shutil.rmtree(subPATH); os.makedirs(subPATH)
-
-            for mail in self.MailJson[category]:
-                requestURL = "https://p31-mailws.icloud.com/wm/message"
-                # requestURL = "https://p31-mailws.icloud.com" + mail["parts"][count + 1]["url"]
-
-                header = {
-                    'Content-Type': 'application/json',
-                    'Referer': 'https://www.icloud.com/',
-                    'Accept': '*/*',
-                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/603.3.1 (KHTML, like Gecko) Version/10.1.2 Safari/603.3.1',
-                    'Origin': 'https://www.icloud.com',
-                }
-
-                data = {
-                    "jsonrpc": "2.0",
-                    "id": str(int(mktime(datetime.now().timetuple())*1000)) + "/1",
-                    "method": "get",
-                    "params": {
-                        "guid": mail["guid"],
-                        "parts": [
-                            mail["parts"][0]["pguid"]
-                        ]
-                    },
-                    "dontMarkAsRead": "true"
-                }
-
-                postData = json.dumps(data)
-                response = requests.post(url=requestURL, headers=header, data=postData, cookies=self.cookies, proxies=proxies, verify=False)
-
-                mailContent = response.json()["result"][0]["parts"][0]["content"]
-
-                filePATH = os.path.join(subPATH, mail["Title"] + ".HTML")
-
-                with open(filePATH, 'w', encoding='utf-8') as f:
-                    f.write(mailContent)
 
     # Convert UTC+9 Mon, 08 May 2023 08:02:16 -0000 -> 2023-05-08 17:02:16
     def Sent_Messages_Convert_KST(self, Timestamp):
