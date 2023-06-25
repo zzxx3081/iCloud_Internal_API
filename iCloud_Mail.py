@@ -9,8 +9,8 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Fiddler Local proxy
 proxies = {
-    'http': 'http://127.0.0.1:8888',
-    'https': 'http://127.0.0.1:8888'
+    # 'http': 'http://127.0.0.1:8888',
+    # 'https': 'http://127.0.0.1:8888'
 }
 
 # Start iCloud Mail Forensics
